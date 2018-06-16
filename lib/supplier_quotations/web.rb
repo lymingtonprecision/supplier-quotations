@@ -251,6 +251,8 @@ module SupplierQuotations
         @base_url = "/rfq/#{rfq_no}/#{revision}"
         @rfq = fetch_populated_rfq rfq_no, revision
         @currencies = Currency.all
+
+        not_found if @rfq.nil?
       end
 
       # Summary of supplier details
@@ -273,6 +275,9 @@ module SupplierQuotations
       # Copy of request for sending to supplier
       get %r{solicitation/(5\d{4})} do |_, _, supplier_id|
         @supplier = Solicitation.fetch supplier_id, @rfq
+
+        not_found if @supplier.nil?
+
         previous_rev = Solicitation.was_sent_prior_revision? @supplier, @rfq
 
         @response_url = url("#{@base_url}/response/#{supplier_id}")
@@ -305,6 +310,9 @@ module SupplierQuotations
         W.before do
           supplier_id = params['captures'][2]
           @supplier = Solicitation.fetch supplier_id, @rfq
+
+          not_found if @supplier.nil?
+
           @quote = Quote.fetch(@supplier, @rfq) {|quote|
             quote.merge 'lines' => Quote::Line.all_on(quote)
           }
