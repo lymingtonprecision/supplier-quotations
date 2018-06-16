@@ -1,0 +1,112 @@
+Request For Order Quotation created (Planned)
+RFQ sent to buyers (Planned)
+  Add suppliers
+  Finalize lines
+  Email suppliers (Released)
+Change to RFQ (Revised -> new revision)
+  New line
+  Closed / Cancelled line
+  Modified line
+    Qty / UOM
+    Date
+    Description
+    Doc text
+  New supplier
+Supplier response
+  Date Picker
+  Notes/Comments
+  Email confirmation back to address RFQ sent to
+
+* * *
+
+Events handled by the web app:
+
+* supplier quote submission
+
+Events handled by IFS events:
+
+* email of RFQ to suppliers
+  show changes between last_printed_revision and current
+* email of rejection notice to suppliers
+  on quote rejection (which happens per *line*)
+* email of quote confirmation to suppliers
+* email to buyers when all suppliers have responded
+* daily email of expiring quotations
+
+* * *
+
+/request/3031/2/solicitations                # details of suppliers on rfq
+/request/3031/2/solicitation/50051           # email rfq to supplier
+/request/3031/2/responses                    # summary of responses received
+/request/3031/2/response/50051               # form for quote submission
+/request/3031/2/response/50051/confirmation  # email confirmation of response
+/request/3031/2/1/rejection/50051            # email rejection notice of a line to supplier
+/request/3031/document/170-1036752-1-A1-1    # copy of attached document
+
+* * *
+
+Models::NotFound
+Models::Currencies
+  .all
+  .exists? currency
+
+Models::Rfq
+  .fetch number, revision
+  .diff new, old
+
+  .response_allowed? rfq
+  .superceeded? rfq
+  .expired? rfq
+  .closed? line
+  .cancelled? line
+
+  .line rfq, line_number
+
+Models::Rfq::Line
+  .all_on rfq
+  .fetch rfq_no, revision, line_number
+  .diff new, old
+
+  .closed? line
+  .cancelled? line
+  .open? line # alias: response_allowed?
+
+Models::Solicitation
+  .all_for rfq
+  .fetch supplier_id, rfq
+  .prior_revision? solicitation, rfq
+
+Models::Quote
+  .all_received_for rfq
+  .fetch supplier, rfq
+
+  .decline quote
+  .update_from_web quote, post_params
+  .has_errors? quote
+  .save quote
+
+  .can_be_revised? quote
+  .received? quote
+
+  .line quote, line_number
+
+Models::Quote::Line
+  .all_on quote
+  .fetch quote, line_number
+
+  .decline line
+  .update_set_from_web lines, post_params
+  .update_from_web line, post_params
+  .has_errors? line
+  .save line
+
+  .can_be_revised? line
+  .declined? line
+  .rejected? line
+
+Models::Document
+  .fetch document
+  .attached_to rfq, line
+  .appears_on? document, rfq
+  .data document
+

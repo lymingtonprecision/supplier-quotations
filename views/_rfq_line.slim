@@ -1,0 +1,43 @@
+tr
+  td.first.line rowspan=rowspan width=20 = line.fetch('line_no')
+  td rowspan=rowspan
+    = line.fetch('description')
+    - if part = line.fetch('part_no')
+      p.detail
+        small Our Part: #{part}
+    - if line['changes']['description']
+      span.was
+        | (was #{line['changes']['description'][0]}
+        - if line['changes']['part_no']
+          | , part #{line['changes']['part_no'][0]}
+        | )
+  td.number width=100
+    == nice_number line['quantity']
+    small = line['uom']
+    - if (line['changes']['quantity'] || line['changes']['uom'])
+      span.was
+        ' (was
+        - if line['changes']['quantity']
+          == nice_number line['changes']['quantity'][0]
+        - else
+          == nice_number line.fetch('quantity')
+        small
+          - if line['changes']['uom']
+            = line['changes']['uom'][0]
+          - else
+            = line['uom']
+        | )
+  td.last.date width=110
+    == short_date line.fetch('wanted_date')
+    - if line['changes']['wanted_date']
+      span.was
+        ' (was
+        == short_date line['changes']['wanted_date'][0]
+        | )
+
+- if line['quote']
+  == slim :_rfq_line_quote, {}, {'quote' => line['quote'], 'rfq' => line, 'readonly' => readonly}
+
+- if show_additions
+  == slim :_rfq_line_additions, {}, {'line' => line}
+

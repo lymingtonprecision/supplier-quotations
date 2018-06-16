@@ -1,0 +1,84 @@
+- @title = "Quotation"
+
+== slim :_header
+  - if @updated
+    tr: td.status.success
+      h3 Submission Successful
+  - if @error
+      tr: td.status.error
+        h3 Errors in submission
+
+== slim :_body
+  - if @updated
+    tr: td
+      p
+        em
+          |
+            Thank you for your submission. You will receive an email
+            confirming your quoted dates and prices shortly.
+
+    - unless @quote_complete
+      tr: td: p: em
+        |
+          Please note that you still need to provide prices and/or dates
+          for some lines and that we will be unable to act on your quote
+          until it is completed.
+
+  - if @error
+    tr: td
+      p: em Please review and correct the following errors in your submission:
+
+      - @quote['lines'].each do |line|
+        - next unless line.has_key? 'errors'
+        h4 Line #{line['line_no']}
+        - if line['errors']['promised_date']
+          p
+            ' Promised date must be in dd/mm/yy format (e.g.
+            = dmy_date Date.today
+            | )
+        - if line['errors']['price_each']
+          p Price must be a number
+
+  - else
+    tr: td
+      p
+        | This quotation will remain open to tender until
+        ==< long_date(@rfq['expires']) + "."
+    - @rfq['text'].each do |text|
+      tr: td == markdown text
+
+    tr: td
+      p
+        '
+          By submitting a quotation you indicate that you have read, understood,
+          and agree to
+        a> href=url("/terms") our standard terms and conditions
+        | (also listed at the bottom of this page.)
+
+  tr: td
+    form action='' method='POST'
+      == quote_currency @quote['currency'], true
+
+      == rfq_line_table @rfq['lines'], false, @quote['lines'], :readonly => false
+
+      center
+        table.actions
+          tr: td: button type="submit" Submit/Update Quote
+
+      script src=url('/assets/scripts/jquery-1.10.2.min.js') type='text/javascript'
+      script src=url('/assets/scripts/moment-2.4.0.min.js') type='text/javascript'
+      script src=url('/assets/scripts/pikaday.js') type='text/javascript'
+      javascript:
+        $(document).ready(function () {
+          $('.date input').each(function (n,input) {
+            var picker = new Pikaday({
+              field: input,
+              minDate: new Date(),
+              format: 'DD/MM/YY',
+              defaultDate: moment($(input).attr('data-default')).toDate()
+            });
+          });
+        });
+
+== slim :_solicitation_footer
+

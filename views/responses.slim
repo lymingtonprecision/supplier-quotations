@@ -1,0 +1,46 @@
+- @title = 'Supplier Responses for'
+
+== slim :_header
+
+== slim :_body
+  - @rfq['text'].each do |text|
+    tr: td == markdown text
+
+  tr: td
+    table.data *table_attrs
+      thead: tr
+        == slim :_rfq_line_headings
+      tbody
+        - @rfq['lines'].each do |_,l|
+          == rfq_line l, :show_additions => false
+          tr.responses
+            td &nbsp;
+            td colspan=3
+              table.data *table_attrs
+                thead
+                  tr
+                    th.first Supplier
+                    th.number width=100 Price Per
+                    th.last.date width=110 Promised
+                tbody
+                  - @quotes.each do |quote|
+                    - line = quote['lines'].find {|ql| ql.fetch('line_no') == l.fetch('line_no')}
+                    - next unless line
+                    tr class=line['status'].downcase
+                      td.first = quote['supplier_name']
+                      - if line['status'] == 'Declined'
+                        td colspan=2
+                          center Declined
+                      - else
+                        td.number == nice_number line['price_each']
+                        td.last.date == short_date line['promised_date']
+
+                    - if line['notes'].to_s != ''
+                      tr.notes
+                        td.first colspan=3
+                          em> Notes:
+                          | #{line['notes']}
+
+              center: table.actions: tr: td
+                a href=l['_links']['approval'] Approve/Reject Line #{l['line_no']} in IFS
+

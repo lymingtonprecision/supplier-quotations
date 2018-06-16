@@ -1,0 +1,24 @@
+tr.quote
+  th.first Price Per
+  th.last.date Promised
+tr.quote
+  td.price.number width=100
+    table
+      tr
+        td width=70
+          input name="lines[#{quote['line_no']}][price_each]" type='text' readonly=readonly value=quote.fetch('price_each')
+        td width=30
+          small
+            | /#{rfq['uom']}
+  td.last.date width=110
+    input name="lines[#{quote['line_no']}][promised_date]" type='text' readonly=readonly data-default=iso_date(rfq.fetch('wanted_date')) value=dmy_date(quote.fetch('promised_date'))
+tr.quote
+  td.decline colspan=2
+    center
+      label
+        input name="lines[#{quote['line_no']}][declined]" type='checkbox' disabled=readonly checked=(quote.fetch('status') == 'Declined')
+        | Declined?
+tr.quote
+  td.notes colspan=2
+    textarea name="lines[#{quote['line_no']}][notes]" rows=3 maxlength=2000 readonly=readonly placeholder=(readonly ? '' : 'notes') = quote.fetch('notes')
+

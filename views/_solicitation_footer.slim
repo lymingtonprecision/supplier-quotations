@@ -1,0 +1,25 @@
+== slim :_footer
+  == yield if block_given?
+
+  tr: td
+    p
+      |
+        We will not be able to accept any items/materials that are
+        subject to a national or international trade agreement that
+        restricts their end use.
+
+    p
+      |
+        We may accept alternatives in special circumstances.
+        If you are unable to provide a required part but can
+        provide a suitable alternative please reply to this
+        email or phone the buyer directly to discuss.
+    p
+      |
+        Any alternative or deviation to which LPE agrees shall
+        be received in writing by the supplier and thereafter
+        stated on any subsequent supplier release certification.
+
+  tr: td.terms
+    == slim :'_terms'
+

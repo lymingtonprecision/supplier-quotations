@@ -1,0 +1,30 @@
+- @title = "Quotation"
+
+== slim :_header
+  tr: td.status
+    h3 Superceeded
+
+== slim :_body
+  tr: td
+    p This quotation has been revised.
+    p
+      '
+        Please
+      - if @rfq['buyer_email']
+        a> href=mailto_latest_revision(@rfq, @supplier) contact the buyer
+      - else
+        ' contact the buyer
+      - if @rfq['buyer_name']
+        ' (#{@rfq['buyer_name']})
+      - elsif @rfq['buyer_id']
+        ' (#{@rfq['buyer_id']})
+      | for a copy of the latest revision.
+    == quote_currency @quote['currency']
+      |  The items quoted for were:
+  tr: td
+    == rfq_line_table @rfq['lines'], false, @quote['lines']
+
+== slim :_footer
+  tr: td.terms
+    == slim :_terms
+

@@ -1,0 +1,29 @@
+- @title = 'Request for Quotation'
+
+== slim :_header
+
+== slim :_body
+  tr: td
+    p
+      - if @supplier
+        '
+          Lymington Precision Engineers invite you to quote
+          for the following items.
+      ' This quotation will remain open to tender until
+      ==< long_date(@rfq['expires']) + "."
+  - @rfq['text'].each do |text|
+    tr: td == markdown text
+
+  - if @rfq.has_key? 'documents'
+    tr.attachments: td
+      == slim :_documents, {}, :documents => @rfq['documents']
+
+  tr: td
+    == rfq_line_table @rfq['lines']
+
+  - if @response_url
+    tr: td align="center"
+      table.actions: tr: td: a href=@response_url Submit Quote
+
+== slim :_solicitation_footer
+

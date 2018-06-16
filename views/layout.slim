@@ -1,0 +1,17 @@
+doctype html
+html
+  head
+    title LPE: #{@title || 'Supplier Quotation'}
+    link rel="stylesheet" type="text/css" href=url("/assets/styles/main.css")
+    meta charset="UTF-8"
+
+  body leftmargin=0 marginwidth=0 topmargin=0 marginheight=0 offset=0
+    center
+      / Main container table
+      table#background *table_attrs
+        / Inner container
+        tr: td#outer-container(align='center' valign='top')
+          table#inner-container *table_attrs(:container => true)
+            == yield
+          br
+

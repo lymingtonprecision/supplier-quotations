@@ -1,0 +1,18 @@
+- @title = "Quotation"
+
+== slim :_header
+  tr: td.status
+    h3 Closed for Responses
+
+== slim :_body
+  tr: td
+    p Responses are no longer being accepted for this request.
+    == quote_currency @quote['currency']
+      |  The items quoted for were:
+  tr: td
+    == rfq_line_table @rfq['lines'], false, @quote['lines']
+
+== slim :_footer
+  tr: td.terms
+    == slim :_terms
+

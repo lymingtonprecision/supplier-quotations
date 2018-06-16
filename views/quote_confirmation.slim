@@ -1,0 +1,47 @@
+- @title = "Quotation Confirmation"
+
+== slim :_header
+
+== slim :_body
+  tr: td
+    h2 Thank you for your quotation
+
+    p
+      |
+        The details you have provided have been passed on to our
+        purchasing team who will contact you in due course.
+
+    - unless @quote_complete
+      p: em
+        |
+          Please note that you still need to provide prices and/or dates
+          for some lines and that we will be unable to act on your quote
+          until it is completed.
+
+    p
+      '
+        This quotation is subject to our
+      a> href=url("/terms") standard Terms &amp; Conditions
+      | (which are listed at the bottom of this page.)
+
+  - @rfq['text'].each do |text|
+    tr: td == markdown text
+
+  tr: td
+    == quote_currency @quote['currency']
+      |  The items quoted for were:
+  tr: td
+    == rfq_line_table @rfq['lines'], false, @quote['lines']
+
+  tr: td
+    p
+      ' This request will remain open to tender until
+      ==> short_date @rfq['expires']
+      ' and you may
+      a> href=@response_url update your quotation
+      | until that date (unless otherwise advised by LPE.)
+
+== slim :_footer
+  tr: td.terms
+    == slim :_terms
+

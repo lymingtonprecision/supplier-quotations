@@ -1,0 +1,57 @@
+- @title = 'Request for Quotation'
+
+== slim :_header
+  tr: td.status
+    h3 Revised
+
+== slim :_body
+  tr: td
+    p
+      '
+        Please review our revised requirements below and update
+        your quotation as necessary.
+      - if @changes['modified'].has_key? 'expires'
+        ' Your response is now required by
+        ==> long_date(@rfq['expires'])
+        ' (changed from
+        ==< short_date @previous_rfq['expires']
+        | .)
+      - else
+        ' This quotation remains open to tender until
+        ==< long_date(@rfq['expires']) + "."
+  - @rfq['text'].each do |text|
+    tr: td == markdown text
+
+  - if @changes['modified'].has_key? 'lines'
+    - line_changes = @changes['modified']['lines']
+
+    - unless line_changes['added'].empty?
+      tr: td.new
+        h3 New Lines
+        == rfq_line_table line_changes['added']
+
+    - unless line_changes['modified'].empty?
+      tr: td.diff
+        h3 Revised Lines
+        == rfq_changed_line_table @rfq['lines'], line_changes['modified']
+
+    - unless line_changes['same'].empty?
+      tr: td.unchanged
+        h3 Unchanged Lines
+        == rfq_line_table line_changes['same']
+
+    - unless line_changes['removed'].empty?
+      tr: td.diff
+        h3 Removed Lines
+        == rfq_line_table line_changes['removed']
+
+  - if @changes['same'].has_key? 'lines'
+    tr: td.unchanged
+      h3 Unchanged Lines
+      == rfq_line_table @changes['same']['lines']
+
+  tr: td align="center"
+    table.actions: tr: td: a href=@response_url Submit/Update Quote
+
+== slim :_solicitation_footer
+

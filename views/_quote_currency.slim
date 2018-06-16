@@ -1,0 +1,11 @@
+p
+  ' All prices quoted are in
+  - if readonly
+    = selected + '.'
+  - else
+    select name="currency"
+      - currencies.each do |c|
+        option selected=(c == selected) value=c = c
+  - if block_given?
+    == yield
+

@@ -1,0 +1,23 @@
+- @title = 'Declined Quotation'
+
+== slim :_header
+
+== slim :_body
+  tr: td
+    p
+      |
+        Please be advised that your quotation for the item shown
+        below has been unsuccessful.
+    p
+      |
+        We thank you for participating in the quotation process
+        and hope you will continue to bid on future requirements.
+
+  - @rfq['text'].each do |text|
+    tr: td == markdown text
+
+  tr: td
+    == rfq_line_table({@rfq_line['line_no'] => @rfq_line}, false, [@line])
+
+== slim :_footer
+

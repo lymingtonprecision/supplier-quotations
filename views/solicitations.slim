@@ -1,0 +1,24 @@
+- @title = 'Suppliers Quoting for'
+
+== slim :_header
+
+== slim :_body
+  tr: td
+    table.data *table_attrs
+      thead: tr
+        th.first Supplier
+        th Sent Latest Rev?
+        th
+        th
+      tbody
+        - @suppliers.each do |s|
+          tr
+            td.first = s['supplier']
+            td
+              - if s['last_seen_revision'] == @rfq['revision']
+                | Yes
+            td
+              a href=s['_links']['solicitation'] Solicitation
+            td
+              a href=s['_links']['quotation'] Quotation
+

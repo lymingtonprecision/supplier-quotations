@@ -1,0 +1,18 @@
+- @title = "Quotation"
+
+== slim :_header
+  tr: td.status
+    h3 Expired
+
+== slim :_body
+  tr: td
+    p The tender period for this request has ended.
+    == quote_currency @quote['currency']
+      |  The items quoted for were:
+  tr: td
+    == rfq_line_table @rfq['lines'], false, @quote['lines']
+
+== slim :_footer
+  tr: td.terms
+    == slim :_terms
+

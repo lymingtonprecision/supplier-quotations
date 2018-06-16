@@ -1,0 +1,6 @@
+table.data *table_attrs
+  thead: tr
+    == slim :_rfq_line_headings
+  tbody
+    == slim :_rfq_lines, {}, :lines => lines
+

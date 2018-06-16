@@ -1,0 +1,10 @@
+- if documents && !documents.empty?
+  h5 Available Documentation
+  table
+    - documents.each do |document|
+      tr
+        td
+          abbr.tag title="Portable Document Format" PDF
+        td
+          a href=document['_links']['self'] = document.fetch('title')
+

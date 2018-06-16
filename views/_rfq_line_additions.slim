@@ -1,0 +1,16 @@
+- if line['text'] && !line['text'].empty?
+  tr.addition.text
+    td &nbsp;
+    td colspan=3
+      h5 Notes
+      table
+        - line['text'].each do |text|
+          tr
+            td
+              == markdown text
+- if line.has_key? 'documents'
+  tr.addition.attachments
+    td &nbsp;
+    td colspan=3
+      == slim :_documents, {}, :documents => line.fetch('documents')
+

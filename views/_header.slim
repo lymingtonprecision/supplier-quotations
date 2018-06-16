@@ -1,0 +1,12 @@
+tr: td
+  table#header *table_attrs
+    tr: td
+      h1 Lymington Precision Engineers
+    tr: td
+      h2
+       = @title
+       - if @rfq
+         small< ##{@rfq['rfq_no']}
+    - if block_given?
+      == yield
+
