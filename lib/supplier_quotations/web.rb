@@ -9,6 +9,8 @@ require_relative "./models"
 
 module SupplierQuotations
   class Web < Sinatra::Base
+    W = self
+
     include Models
 
     register Sinatra::Namespace
@@ -244,7 +246,7 @@ module SupplierQuotations
     end
 
     namespace %r{/rfq/(\d+)/(\d+)/} do
-      before do
+      W.before do
         rfq_no, revision = *params['captures'][0,2].collect {|n| n.to_i}
         @base_url = "/rfq/#{rfq_no}/#{revision}"
         @rfq = fetch_populated_rfq rfq_no, revision
@@ -300,7 +302,7 @@ module SupplierQuotations
       end
 
       namespace %r{response/(5\d{4})} do
-        before do
+        W.before do
           supplier_id = params['captures'][2]
           @supplier = Solicitation.fetch supplier_id, @rfq
           @quote = Quote.fetch(@supplier, @rfq) {|quote|
