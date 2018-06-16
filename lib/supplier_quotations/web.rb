@@ -243,7 +243,7 @@ module SupplierQuotations
       slim :terms
     end
 
-    namespace %r{^/rfq/(\d+)/(\d+)/} do
+    namespace %r{/rfq/(\d+)/(\d+)/} do
       before do
         rfq_no, revision = *params['captures'][0,2].collect {|n| n.to_i}
         @base_url = "/rfq/#{rfq_no}/#{revision}"
@@ -269,7 +269,7 @@ module SupplierQuotations
       end
 
       # Copy of request for sending to supplier
-      get %r{solicitation/(5\d{4})$} do |_, _, supplier_id|
+      get %r{solicitation/(5\d{4})} do |_, _, supplier_id|
         @supplier = Solicitation.fetch supplier_id, @rfq
         previous_rev = Solicitation.was_sent_prior_revision? @supplier, @rfq
 
@@ -362,7 +362,7 @@ module SupplierQuotations
       end
 
       # Reject notice for a line to a supplier
-      get %r{(\d+)/rejection/(5\d{4})$} do |_, _, line_no, supplier_id|
+      get %r{(\d+)/rejection/(5\d{4})} do |_, _, line_no, supplier_id|
         line_no = line_no.to_i
 
         @supplier = Solicitation.fetch supplier_id, @rfq
@@ -377,7 +377,7 @@ module SupplierQuotations
       end
 
       # Copy of an attached document
-      get %r{document/(\d{3})\-(\d{7,})\-(\d+)\-([A-Z0-9]+)\-(\d+)$} do
+      get %r{document/(\d{3})\-(\d{7,})\-(\d+)\-([A-Z0-9]+)\-(\d+)} do
         keys = %w{doc_class_no doc_no sheet revision file_no}
         document = keys.zip(params['captures'][2,keys.size]).inject({}) {|h,kv|
           h[kv[0]] = kv[1]
