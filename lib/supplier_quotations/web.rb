@@ -19,7 +19,7 @@ module SupplierQuotations
     set :root, File.expand_path(File.dirname(__FILE__) + "/../../")
 
     set :slim,
-      :format => :html5,
+      :format => :html,
       :pretty => !settings.production?
 
     helpers do
