@@ -9,6 +9,7 @@ gem "ruby-oci8"
 gem "slim"
 gem "kramdown"
 gem "hpricot"
+gem "nokogiri"
 gem "premailer"
 gem "sass"
 
