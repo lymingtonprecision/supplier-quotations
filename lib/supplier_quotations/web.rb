@@ -318,7 +318,7 @@ module SupplierQuotations
       @quote_complete = Quote.received? @quote
     end
 
-        # Quote formatted as a confirmation email
+    # Quote formatted as a confirmation email
     get Regexp.new(RFQ_RESPONSE_PATH + '/confirmation') do
       email :quote_confirmation
     end
@@ -366,42 +366,41 @@ module SupplierQuotations
         redirect request.path, 303
       end
     end
-  end
 
-  # Reject notice for a line to a supplier
-  get Regexp.new(RFQ_PATH +  "(\d+)/rejection/(5\d{4})") do |_, _, line_no, supplier_id|
-    line_no = line_no.to_i
+    # Reject notice for a line to a supplier
+    get Regexp.new(RFQ_PATH +  "(\d+)/rejection/(5\d{4})") do |_, _, line_no, supplier_id|
+      line_no = line_no.to_i
 
-    @supplier = Solicitation.fetch supplier_id, @rfq
-    @quote = Quote.fetch @supplier, @rfq
-    @line = Quote::Line.fetch @quote, line_no
+      @supplier = Solicitation.fetch supplier_id, @rfq
+      @quote = Quote.fetch @supplier, @rfq
+      @line = Quote::Line.fetch @quote, line_no
 
-    not_found unless Quote::Line.rejected? @line
+      not_found unless Quote::Line.rejected? @line
 
-    @rfq_line = Rfq.line @rfq, line_no
+      @rfq_line = Rfq.line @rfq, line_no
 
-    email :rejection
-  end
+      email :rejection
+    end
 
-  DOCUMENT_PATH = "document/(\d{3})\-(\d{7,})\-(\d+)\-([A-Z0-9]+)\-(\d+)"
+    DOCUMENT_PATH = "document/(\d{3})\-(\d{7,})\-(\d+)\-([A-Z0-9]+)\-(\d+)"
 
-  # Copy of an attached document
-  get Regexp.new(RFQ_PATH + DOCUMENT_PATH) do
-    keys = %w{doc_class_no doc_no sheet revision file_no}
-    document = keys.zip(params['captures'][2,keys.size]).inject({}) {|h,kv|
-      h[kv[0]] = kv[1]
-      h
-    }
+    # Copy of an attached document
+    get Regexp.new(RFQ_PATH + DOCUMENT_PATH) do
+      keys = %w{doc_class_no doc_no sheet revision file_no}
+      document = keys.zip(params['captures'][2,keys.size]).inject({}) {|h,kv|
+        h[kv[0]] = kv[1]
+        h
+      }
 
-    not_found unless Document.appears_on? @rfq, document
+      not_found unless Document.appears_on? @rfq, document
 
-    @document = Document.fetch document
-    @data = Document.data(@document)
+      @document = Document.fetch document
+      @data = Document.data(@document)
 
-    attachment @document.fetch('file_name')
-    content_type @document.fetch('file_type'),
-    :default => "application/octet-stream"
-    response.write @data
+      attachment @document.fetch('file_name')
+      content_type @document.fetch('file_type'),
+      :default => "application/octet-stream"
+      response.write @data
+    end
   end
 end
-
