@@ -114,15 +114,17 @@ module SupplierQuotations; module Models; class Quote;
         c.bind_param ':revision', line.fetch('revision'), Fixnum
         c.bind_param ':line_no', line.fetch('line_no'), Fixnum
         c.bind_param ':supplier', line.fetch('supplier_id'), String, 20
-        c.bind_param ':price_each', line.fetch('price_each'), Float
-        c.bind_param ':promised_date', line.fetch('promised_date'), Date
 
         note_text = line.fetch('notes', '')
 
         if declined? line
           note_text = "Declined\n\n" + note_text if declined? line
+          c.bind_param ':price_each', nil, Float
+          c.bind_param ':promised_date', nil, Date
           c.bind_param ':declined', 1, Fixnum
         else
+          c.bind_param ':price_each', line.fetch('price_each'), Float
+          c.bind_param ':promised_date', line.fetch('promised_date'), Date
           c.bind_param ':declined', 0, Fixnum
         end
 
