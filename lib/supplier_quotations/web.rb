@@ -240,7 +240,7 @@ module SupplierQuotations
       slim :terms
     end
 
-    RFQ_PATH = "/rfq/(\d+)/(\d+)/"
+    RFQ_PATH = "/rfq/(\\d+)/(\\d+)/"
 
     before Regexp.new(RFQ_PATH) do
       rfq_no, revision = *params['captures'][0,2].collect {|n| n.to_i}
@@ -269,7 +269,7 @@ module SupplierQuotations
     end
 
     # Copy of request for sending to supplier
-    get Regexp.new(RFQ_PATH + "solicitation/(5\d{4})") do |_, _, supplier_id|
+    get Regexp.new(RFQ_PATH + "solicitation/(5\\d{4})") do |_, _, supplier_id|
       @supplier = Solicitation.fetch supplier_id, @rfq
 
       not_found if @supplier.nil?
@@ -302,7 +302,7 @@ module SupplierQuotations
       email :responses
     end
 
-    RFQ_RESPONSE_PATH = RFQ_PATH + "response/(5\d{4})"
+    RFQ_RESPONSE_PATH = RFQ_PATH + "response/(5\\d{4})"
 
     before Regexp.new(RFQ_RESPONSE_PATH) do
       supplier_id = params['captures'][2]
@@ -368,7 +368,7 @@ module SupplierQuotations
     end
 
     # Reject notice for a line to a supplier
-    get Regexp.new(RFQ_PATH +  "(\d+)/rejection/(5\d{4})") do |_, _, line_no, supplier_id|
+    get Regexp.new(RFQ_PATH +  "(\\d+)/rejection/(5\\d{4})") do |_, _, line_no, supplier_id|
       line_no = line_no.to_i
 
       @supplier = Solicitation.fetch supplier_id, @rfq
@@ -382,7 +382,7 @@ module SupplierQuotations
       email :rejection
     end
 
-    DOCUMENT_PATH = "document/(\d{3})\-(\d{7,})\-(\d+)\-([A-Z0-9]+)\-(\d+)"
+    DOCUMENT_PATH = "document/(\\d{3})-(\\d{7,})-(\\d+)-([A-Z0-9]+)-(\\d+)"
 
     # Copy of an attached document
     get Regexp.new(RFQ_PATH + DOCUMENT_PATH) do
