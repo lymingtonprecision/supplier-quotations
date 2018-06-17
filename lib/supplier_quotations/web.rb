@@ -240,9 +240,9 @@ module SupplierQuotations
       slim :terms
     end
 
-    self.rfq_path = "/rfq/(\d+)/(\d+)/"
+    RFQ_PATH = "/rfq/(\d+)/(\d+)/"
 
-    before Regexp.new(rfq_path) do
+    before Regexp.new(RFQ_PATH) do
       rfq_no, revision = *params['captures'][0,2].collect {|n| n.to_i}
       @base_url = "/rfq/#{rfq_no}/#{revision}"
       @rfq = fetch_populated_rfq rfq_no, revision
@@ -252,7 +252,7 @@ module SupplierQuotations
     end
 
     # Summary of supplier details
-    get Regexp.new(rfq_path + 'solicitations'), :request_from_lan => true do
+    get Regexp.new(RFQ_PATH + 'solicitations'), :request_from_lan => true do
       @suppliers = Solicitation.all_for(@rfq) {|s|
         sid = s['supplier_id']
         s.merge '_links' => {
@@ -264,12 +264,12 @@ module SupplierQuotations
       slim :solicitations
     end
 
-    get Regexp.new(rfq_path + 'solicitation') do
+    get Regexp.new(RFQ_PATH + 'solicitation') do
       email :solicitation
     end
 
     # Copy of request for sending to supplier
-    get Regexp.new(rfq_path + "solicitation/(5\d{4})") do |_, _, supplier_id|
+    get Regexp.new(RFQ_PATH + "solicitation/(5\d{4})") do |_, _, supplier_id|
       @supplier = Solicitation.fetch supplier_id, @rfq
 
       not_found if @supplier.nil?
@@ -288,7 +288,7 @@ module SupplierQuotations
     end
 
     # Summary of responses
-    get Regexp.new(rfq_path + 'responses'), :request_from_lan => true do
+    get Regexp.new(RFQ_PATH + 'responses'), :request_from_lan => true do
       @quotes = Quote.all_received_for(@rfq) {|quote|
         quote.merge(
           'lines' => Quote::Line.all_on(quote),
@@ -302,9 +302,9 @@ module SupplierQuotations
       email :responses
     end
 
-    self.rfq_response_path = rfq_path + "response/(5\d{4})"
+    RFQ_RESPONSE_PATH = RFQ_PATH + "response/(5\d{4})"
 
-    before Regexp.new(rfq_response_path) do
+    before Regexp.new(RFQ_RESPONSE_PATH) do
       supplier_id = params['captures'][2]
       @supplier = Solicitation.fetch supplier_id, @rfq
 
@@ -319,34 +319,34 @@ module SupplierQuotations
     end
 
         # Quote formatted as a confirmation email
-    get Regexp.new(rfq_response_path + '/confirmation') do
+    get Regexp.new(RFQ_RESPONSE_PATH + '/confirmation') do
       email :quote_confirmation
     end
 
     # Quotation form
-    get Regexp.new(rfq_response_path), :can_revise_quote => true do
+    get Regexp.new(RFQ_RESPONSE_PATH), :can_revise_quote => true do
       slim :quote
     end
 
-    get Regexp.new(rfq_response_path), :status => :superceeded do
+    get Regexp.new(RFQ_RESPONSE_PATH), :status => :superceeded do
       slim :quote_superceeded
     end
 
-    get Regexp.new(rfq_response_path), :status => :expired do
+    get Regexp.new(RFQ_RESPONSE_PATH), :status => :expired do
       slim :quote_expired
     end
 
-    get Regexp.new(rfq_response_path) do
+    get Regexp.new(RFQ_RESPONSE_PATH) do
       slim :quote_closed
     end
 
     # Submit new/updated quote
-    post Regexp.new(rfq_response_path), :can_revise_quote => false do
+    post Regexp.new(RFQ_RESPONSE_PATH), :can_revise_quote => false do
       status 202
       slim :quote_closed
     end
 
-    post Regexp.new(rfq_response_path), :can_revise_quote => true do
+    post Regexp.new(RFQ_RESPONSE_PATH), :can_revise_quote => true do
       @original_quote = @quote
 
       if request.POST['decline'].to_s.downcase == 'all'
@@ -369,7 +369,7 @@ module SupplierQuotations
   end
 
   # Reject notice for a line to a supplier
-  get Regexp.new(rfq_path +  "(\d+)/rejection/(5\d{4})") do |_, _, line_no, supplier_id|
+  get Regexp.new(RFQ_PATH +  "(\d+)/rejection/(5\d{4})") do |_, _, line_no, supplier_id|
     line_no = line_no.to_i
 
     @supplier = Solicitation.fetch supplier_id, @rfq
@@ -383,10 +383,10 @@ module SupplierQuotations
     email :rejection
   end
 
-  self.document_path = "document/(\d{3})\-(\d{7,})\-(\d+)\-([A-Z0-9]+)\-(\d+)"
+  DOCUMENT_PATH = "document/(\d{3})\-(\d{7,})\-(\d+)\-([A-Z0-9]+)\-(\d+)"
 
   # Copy of an attached document
-  get Regexp.new(rfq_path + document_path) do
+  get Regexp.new(RFQ_PATH + DOCUMENT_PATH) do
     keys = %w{doc_class_no doc_no sheet revision file_no}
     document = keys.zip(params['captures'][2,keys.size]).inject({}) {|h,kv|
       h[kv[0]] = kv[1]
