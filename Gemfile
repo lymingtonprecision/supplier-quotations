@@ -4,7 +4,6 @@ gem "basic_object", :platforms => :ruby_18
 gem "require_relative", :platforms => :ruby_18
 
 gem "sinatra"
-gem "sinatra-contrib"
 gem "rack-flash3"
 gem "ruby-oci8"
 gem "slim"

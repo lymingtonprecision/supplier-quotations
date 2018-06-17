@@ -1,5 +1,4 @@
 require "sinatra/base"
-require "sinatra/namespace"
 require "rack/flash"
 require "slim"
 require "premailer"
@@ -9,11 +8,7 @@ require_relative "./models"
 
 module SupplierQuotations
   class Web < Sinatra::Base
-    W = self
-
     include Models
-
-    register Sinatra::Namespace
 
     enable :sessions
     use Rack::Flash
@@ -245,166 +240,168 @@ module SupplierQuotations
       slim :terms
     end
 
-    namespace %r{/rfq/(\d+)/(\d+)/} do
-      W.before do
-        rfq_no, revision = *params['captures'][0,2].collect {|n| n.to_i}
-        @base_url = "/rfq/#{rfq_no}/#{revision}"
-        @rfq = fetch_populated_rfq rfq_no, revision
-        @currencies = Currency.all
+    self.rfq_path = "/rfq/(\d+)/(\d+)/"
 
-        not_found if @rfq.nil?
-      end
+    before Regexp.new(rfq_path) do
+      rfq_no, revision = *params['captures'][0,2].collect {|n| n.to_i}
+      @base_url = "/rfq/#{rfq_no}/#{revision}"
+      @rfq = fetch_populated_rfq rfq_no, revision
+      @currencies = Currency.all
 
-      # Summary of supplier details
-      get 'solicitations', :request_from_lan => true do
-        @suppliers = Solicitation.all_for(@rfq) {|s|
-          sid = s['supplier_id']
-          s.merge '_links' => {
-            'solicitation' => url("#{@base_url}/solicitation/#{sid}"),
-            'quotation' => url("#{@base_url}/response/#{sid}")
-          }
-        }
+      not_found if @rfq.nil?
+    end
 
-        slim :solicitations
-      end
+    # Summary of supplier details
+    get Regexp.new(rfq_path + 'solicitations'), :request_from_lan => true do
+      @suppliers = Solicitation.all_for(@rfq) {|s|
+        sid = s['supplier_id']
+        s.merge '_links' => {
+                  'solicitation' => url("#{@base_url}/solicitation/#{sid}"),
+                  'quotation' => url("#{@base_url}/response/#{sid}")
+                }
+      }
 
-      get 'solicitation' do
+      slim :solicitations
+    end
+
+    get Regexp.new(rfq_path + 'solicitation') do
+      email :solicitation
+    end
+
+    # Copy of request for sending to supplier
+    get Regexp.new(rfq_path + "solicitation/(5\d{4})") do |_, _, supplier_id|
+      @supplier = Solicitation.fetch supplier_id, @rfq
+
+      not_found if @supplier.nil?
+
+      previous_rev = Solicitation.was_sent_prior_revision? @supplier, @rfq
+
+      @response_url = url("#{@base_url}/response/#{supplier_id}")
+
+      if previous_rev != false
+        @previous_rfq = fetch_populated_rfq @rfq.fetch('rfq_no'), previous_rev
+        @changes = Rfq.diff @rfq, @previous_rfq, %w{revision _links}
+        email :solicitation_update
+      else
         email :solicitation
       end
+    end
 
-      # Copy of request for sending to supplier
-      get %r{solicitation/(5\d{4})} do |_, _, supplier_id|
-        @supplier = Solicitation.fetch supplier_id, @rfq
-
-        not_found if @supplier.nil?
-
-        previous_rev = Solicitation.was_sent_prior_revision? @supplier, @rfq
-
-        @response_url = url("#{@base_url}/response/#{supplier_id}")
-
-        if previous_rev != false
-          @previous_rfq = fetch_populated_rfq @rfq.fetch('rfq_no'), previous_rev
-          @changes = Rfq.diff @rfq, @previous_rfq, %w{revision _links}
-          email :solicitation_update
-        else
-          email :solicitation
-        end
-      end
-
-      # Summary of responses
-      get 'responses', :request_from_lan => true do
-        @quotes = Quote.all_received_for(@rfq) {|quote|
-          quote.merge(
-            'lines' => Quote::Line.all_on(quote),
-            '_links' => {
-              'self' => url("#{@base_url}/response/#{quote['supplier_id']}"),
-              'ifs'  => Quote.ifs_url(quote)
-            }
-          )
-        }
-
-        email :responses
-      end
-
-      namespace %r{response/(5\d{4})} do
-        W.before do
-          supplier_id = params['captures'][2]
-          @supplier = Solicitation.fetch supplier_id, @rfq
-
-          not_found if @supplier.nil?
-
-          @quote = Quote.fetch(@supplier, @rfq) {|quote|
-            quote.merge 'lines' => Quote::Line.all_on(quote)
+    # Summary of responses
+    get Regexp.new(rfq_path + 'responses'), :request_from_lan => true do
+      @quotes = Quote.all_received_for(@rfq) {|quote|
+        quote.merge(
+          'lines' => Quote::Line.all_on(quote),
+          '_links' => {
+            'self' => url("#{@base_url}/response/#{quote['supplier_id']}"),
+            'ifs'  => Quote.ifs_url(quote)
           }
-          @response_url = url("#{@base_url}/response/#{supplier_id}")
-          @updated = flash[:updated]
-          @quote_complete = Quote.received? @quote
-        end
+        )
+      }
+
+      email :responses
+    end
+
+    self.rfq_response_path = rfq_path + "response/(5\d{4})"
+
+    before Regexp.new(rfq_response_path) do
+      supplier_id = params['captures'][2]
+      @supplier = Solicitation.fetch supplier_id, @rfq
+
+      not_found if @supplier.nil?
+
+      @quote = Quote.fetch(@supplier, @rfq) {|quote|
+        quote.merge 'lines' => Quote::Line.all_on(quote)
+      }
+      @response_url = url("#{@base_url}/response/#{supplier_id}")
+      @updated = flash[:updated]
+      @quote_complete = Quote.received? @quote
+    end
 
         # Quote formatted as a confirmation email
-        get '/confirmation' do
-          email :quote_confirmation
-        end
+    get Regexp.new(rfq_response_path + '/confirmation') do
+      email :quote_confirmation
+    end
 
-        # Quotation form
-        get :can_revise_quote => true do
-          slim :quote
-        end
+    # Quotation form
+    get Regexp.new(rfq_response_path), :can_revise_quote => true do
+      slim :quote
+    end
 
-        get :status => :superceeded do
-          slim :quote_superceeded
-        end
+    get Regexp.new(rfq_response_path), :status => :superceeded do
+      slim :quote_superceeded
+    end
 
-        get :status => :expired do
-          slim :quote_expired
-        end
+    get Regexp.new(rfq_response_path), :status => :expired do
+      slim :quote_expired
+    end
 
-        get do
-          slim :quote_closed
-        end
+    get Regexp.new(rfq_response_path) do
+      slim :quote_closed
+    end
 
-        # Submit new/updated quote
-        post :can_revise_quote => false do
-          status 202
-          slim :quote_closed
-        end
+    # Submit new/updated quote
+    post Regexp.new(rfq_response_path), :can_revise_quote => false do
+      status 202
+      slim :quote_closed
+    end
 
-        post :can_revise_quote => true do
-          @original_quote = @quote
+    post Regexp.new(rfq_response_path), :can_revise_quote => true do
+      @original_quote = @quote
 
-          if request.POST['decline'].to_s.downcase == 'all'
-            @quote = Quote.decline @quote
-          else
-            @quote = Quote.update_from_web @quote, request.POST
-          end
-
-          @quote = Quote.save @quote
-
-          if Quote.has_errors? @quote
-            @error = true
-            status 400
-            slim :quote
-          else
-            flash[:updated] = true
-            redirect request.path, 303
-          end
-        end
+      if request.POST['decline'].to_s.downcase == 'all'
+        @quote = Quote.decline @quote
+      else
+        @quote = Quote.update_from_web @quote, request.POST
       end
 
-      # Reject notice for a line to a supplier
-      get %r{(\d+)/rejection/(5\d{4})} do |_, _, line_no, supplier_id|
-        line_no = line_no.to_i
+      @quote = Quote.save @quote
 
-        @supplier = Solicitation.fetch supplier_id, @rfq
-        @quote = Quote.fetch @supplier, @rfq
-        @line = Quote::Line.fetch @quote, line_no
-
-        not_found unless Quote::Line.rejected? @line
-
-        @rfq_line = Rfq.line @rfq, line_no
-
-        email :rejection
-      end
-
-      # Copy of an attached document
-      get %r{document/(\d{3})\-(\d{7,})\-(\d+)\-([A-Z0-9]+)\-(\d+)} do
-        keys = %w{doc_class_no doc_no sheet revision file_no}
-        document = keys.zip(params['captures'][2,keys.size]).inject({}) {|h,kv|
-          h[kv[0]] = kv[1]
-          h
-        }
-
-        not_found unless Document.appears_on? @rfq, document
-
-        @document = Document.fetch document
-        @data = Document.data(@document)
-
-        attachment @document.fetch('file_name')
-        content_type @document.fetch('file_type'),
-          :default => "application/octet-stream"
-        response.write @data
+      if Quote.has_errors? @quote
+        @error = true
+        status 400
+        slim :quote
+      else
+        flash[:updated] = true
+        redirect request.path, 303
       end
     end
+  end
+
+  # Reject notice for a line to a supplier
+  get Regexp.new(rfq_path +  "(\d+)/rejection/(5\d{4})") do |_, _, line_no, supplier_id|
+    line_no = line_no.to_i
+
+    @supplier = Solicitation.fetch supplier_id, @rfq
+    @quote = Quote.fetch @supplier, @rfq
+    @line = Quote::Line.fetch @quote, line_no
+
+    not_found unless Quote::Line.rejected? @line
+
+    @rfq_line = Rfq.line @rfq, line_no
+
+    email :rejection
+  end
+
+  self.document_path = "document/(\d{3})\-(\d{7,})\-(\d+)\-([A-Z0-9]+)\-(\d+)"
+
+  # Copy of an attached document
+  get Regexp.new(rfq_path + document_path) do
+    keys = %w{doc_class_no doc_no sheet revision file_no}
+    document = keys.zip(params['captures'][2,keys.size]).inject({}) {|h,kv|
+      h[kv[0]] = kv[1]
+      h
+    }
+
+    not_found unless Document.appears_on? @rfq, document
+
+    @document = Document.fetch document
+    @data = Document.data(@document)
+
+    attachment @document.fetch('file_name')
+    content_type @document.fetch('file_type'),
+    :default => "application/octet-stream"
+    response.write @data
   end
 end
 
