@@ -242,7 +242,7 @@ module SupplierQuotations
 
     RFQ_PATH = "/rfq/(\\d+)/(\\d+)/"
 
-    before Regexp.new(RFQ_PATH) do
+    before Regexp.new(RFQ_PATH + ".*") do
       rfq_no, revision = *params['captures'][0,2].collect {|n| n.to_i}
       @base_url = "/rfq/#{rfq_no}/#{revision}"
       @rfq = fetch_populated_rfq rfq_no, revision
@@ -304,7 +304,7 @@ module SupplierQuotations
 
     RFQ_RESPONSE_PATH = RFQ_PATH + "response/(5\\d{4})"
 
-    before Regexp.new(RFQ_RESPONSE_PATH) do
+    before Regexp.new(RFQ_RESPONSE_PATH + "(/.*)?") do
       supplier_id = params['captures'][2]
       @supplier = Solicitation.fetch supplier_id, @rfq
 
