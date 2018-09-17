@@ -40,6 +40,7 @@ module SupplierQuotations; module Models; class Quote
         price_uom_ varchar2(10);
         price_conv_ number;
         add_cost_ number;
+        add_cost_incl_tax_ number;
       begin
         select
           ql.objid,
@@ -51,6 +52,7 @@ module SupplierQuotations; module Models; class Quote
           nvl(ql.price_unit_meas, iq.buy_unit_meas),
           nvl(ql.price_conv_factor, 1),
           nvl(ql.additional_cost_amount, 0)
+          nvl(ql.additional_cost_incl_tax, 0)
         into
           objid_,
           objver_,
@@ -58,7 +60,8 @@ module SupplierQuotations; module Models; class Quote
           part_no_,
           price_uom_,
           price_conv_,
-          add_cost_
+          add_cost_,
+          add_cost_incl_tax_
         from ifsapp.quotation_line_com ql
         join ifsapp.inquiry_line_revision iq
           on ql.inquiry_no = iq.inquiry_no
@@ -88,7 +91,13 @@ module SupplierQuotations; module Models; class Quote
           'ADDITIONAL_COST_AMOUNT', add_cost_, attr_
         );
         ifsapp.client_sys.add_to_attr(
+          'ADDITIONAL_COST_INCL_TAX', add_cost_incl_tax_, attr_
+        );
+        ifsapp.client_sys.add_to_attr(
           'PRICE', :price_each, attr_
+        );
+        ifsapp.client_sys.add_to_attr(
+          'PRICE_INCL_TAX', :price_each, attr_
         );
         ifsapp.client_sys.add_to_attr(
           'PROMISED_DELIVERY_DATE', :promised_date, attr_
