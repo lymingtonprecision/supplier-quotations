@@ -51,7 +51,7 @@ module SupplierQuotations; module Models; class Quote
           ),
           nvl(ql.price_unit_meas, iq.buy_unit_meas),
           nvl(ql.price_conv_factor, 1),
-          nvl(ql.additional_cost_amount, 0)
+          nvl(ql.additional_cost_amount, 0),
           nvl(ql.additional_cost_incl_tax, 0)
         into
           objid_,
@@ -127,4 +127,3 @@ module SupplierQuotations; module Models; class Quote
     end
   end
 end; end; end
-
